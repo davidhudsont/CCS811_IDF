@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "esp_console.h": "c",
+        "uart.h": "c",
+        "sdkconfig.h": "c",
+        "rfm69.h": "c"
+    }
+}
