@@ -16,7 +16,8 @@
 #ifndef _RMF69_H_
 #define _RFM69_H_
 
-
+#define RFM_IRQ (4)
+#define ESP_INTR_FLAG_DEFUALT 0
 
 typedef struct {
     spi_device_handle_t *spi;
@@ -28,6 +29,9 @@ void initialize_rfm(spi_device_handle_t spi, uint8_t freqBand, uint8_t ID, uint8
 
 uint8_t readReg(spi_device_handle_t spi, uint8_t address);
 void writeReg(spi_device_handle_t spi, uint8_t address, uint8_t data);
+
+
+void rfm_isr_setup();
 
 
 #endif
