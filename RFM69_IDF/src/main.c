@@ -2,8 +2,8 @@
  * @file main.c
  * @author David Hudson
  * @brief 
- * @version 0.1
- * @date 2019-11-10
+ * @version 0.2
+ * @date 2019-11-15
  * 
  * 
  */
@@ -62,16 +62,8 @@ void rfm_task(void *pvParameter)
         printf("Spi Configuration Error\n");
     }
 
-
-    for (int i=0; i<=0xFF; i++) 
-    {
-        writeReg(spi, REG_DIOMAPPING1, i);
-        uint8_t reg = readReg(spi, REG_DIOMAPPING1);
-        printf("Reg DIO : 0x%x\n", (unsigned int)reg);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-    }
-
+    RFM_Set_Carrier_Frequency(spi, RFM_915_MHZ);
+    RFM_Set_Bitrate(spi, RFM_4_8_KBPS);
     vTaskDelay(2000 / portTICK_PERIOD_MS);
 
     while (1)
@@ -81,6 +73,10 @@ void rfm_task(void *pvParameter)
         printf("RFM69 REGISTER: 0x%x\n", (unsigned int)data); //Should be 0x24
         uint8_t reg = readReg(spi, REG_DIOMAPPING1);
         printf("Reg DIO : 0x%x\n", (unsigned int)reg);
+        uint32_t  freq = RFM_Get__Carrier_Frequency(spi);
+        printf("Frequency(hz) : %d\n", freq);
+        uint32_t  bps = RFM_Get_Bitrate(spi);
+        printf("Bitrate(bps) : %d\n", bps);
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         fflush(stdout);
 
@@ -96,40 +92,4 @@ void app_main()
 
     button_isr_init();
 
-    /*
-    spi_device_handle_t spi;
-    memset(&spi, 0, sizeof(spi));    
-    int clock_speed = 10*1000*1000; // Clock speed 10MHz
-
-    esp_err_t err = false;
-    err = BSP_SPI_Init(&spi, clock_speed);
-    if (err != ESP_OK)
-    {
-        printf("Spi Configuration Error\n");
-    }
-
-
-    for (int i=0; i<=0xFF; i++) 
-    {
-        writeReg(spi, REG_DIOMAPPING1, i);
-        uint8_t reg = readReg(spi, REG_DIOMAPPING1);
-        printf("Reg DIO : 0x%x\n", (unsigned int)reg);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-    }
-
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
-
-    while (1)
-    {
-        printf("READ RFM VERSION\n");
-        uint32_t data = readReg(spi, REG_VERSION);
-        printf("RFM69 REGISTER: 0x%x\n", (unsigned int)data); //Should be 0x24
-        uint8_t reg = readReg(spi, REG_DIOMAPPING1);
-        printf("Reg DIO : 0x%x\n", (unsigned int)reg);
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-        fflush(stdout);
-
-    }
-    */
 }

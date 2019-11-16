@@ -4,6 +4,7 @@
         "uart.h": "c",
         "sdkconfig.h": "c",
         "rfm69.h": "c",
-        "gpio.h": "c"
+        "gpio.h": "c",
+        "rfm69registers.h": "c"
     }
 }
