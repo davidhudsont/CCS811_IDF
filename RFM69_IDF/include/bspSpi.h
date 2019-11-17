@@ -28,6 +28,8 @@ esp_err_t BSP_SPI_Init(spi_device_handle_t *spi, int clock_speed);
 uint8_t SPI_readReg(spi_device_handle_t spi, const uint8_t address);
 void SPI_writeReg(spi_device_handle_t spi, const uint8_t address, const uint8_t data);
 
+void SPI_Burst_Read(spi_device_handle_t spi, const uint8_t address, uint8_t * buf, uint32_t size);
+void SPI_Burst_Write(spi_device_handle_t spi, const uint8_t address, uint8_t * buf, uint32_t size);
 
 // These functions are currently not used
 void SPI_SendByte8(spi_device_handle_t spi, const uint8_t data);

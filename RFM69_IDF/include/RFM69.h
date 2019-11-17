@@ -20,7 +20,7 @@
 #define RF_FSTEP (61.03515625) // == FXOSC / 2^19 = 32MHz / 2^19 (p13 in datasheet)
 
 #define RFM_IRQ (4) // IRQ Pin number
-#define ESP_INTR_FLAG_DEFUALT (0) // INTERRUPT FLAG
+#define RFM_ESP_INTR_FLAG_DEFUALT (0) // INTERRUPT FLAG
 
 typedef enum rfm_carrier_freq {
     RFM_913_MHZ = 0,
@@ -53,10 +53,14 @@ typedef struct {
 
 void initialize_rfm(spi_device_handle_t spi, uint8_t freqBand, uint8_t ID, uint8_t networkID);
 
+void RFM_Send(spi_device_handle_t spi, uint8_t * msg);
+void RFM_Recieve(spi_device_handle_t spi, uint8_t * msg);
+
 void RFM_Set_Mode(spi_device_handle_t spi, RFM_MODES mode, bool sequencerOff, bool listenOn);
 
 void RFM_Set_Carrier_Frequency(spi_device_handle_t spi, RFM_CARRIER_FREQ freq);
-uint32_t RFM_Get__Carrier_Frequency(spi_device_handle_t spi);
+uint32_t RFM_Get_Carrier_Frequency(spi_device_handle_t spi);
+uint32_t RFM_Get_Carrier_Frequency_Burst(spi_device_handle_t spi);
 
 void RFM_Set_Bitrate(spi_device_handle_t spi, RFM_BITRATE bitrate);
 uint32_t RFM_Get_Bitrate(spi_device_handle_t);

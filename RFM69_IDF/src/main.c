@@ -73,7 +73,7 @@ void rfm_task(void *pvParameter)
         printf("RFM69 REGISTER: 0x%x\n", (unsigned int)data); //Should be 0x24
         uint8_t reg = readReg(spi, REG_DIOMAPPING1);
         printf("Reg DIO : 0x%x\n", (unsigned int)reg);
-        uint32_t  freq = RFM_Get__Carrier_Frequency(spi);
+        uint32_t  freq = RFM_Get_Carrier_Frequency_Burst(spi);
         printf("Frequency(hz) : %d\n", freq);
         uint32_t  bps = RFM_Get_Bitrate(spi);
         printf("Bitrate(bps) : %d\n", bps);

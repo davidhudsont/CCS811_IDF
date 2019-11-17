@@ -108,12 +108,24 @@ void RFM_Set_Carrier_Frequency(spi_device_handle_t spi, RFM_CARRIER_FREQ freq)
     }
 }
 
-uint32_t RFM_Get__Carrier_Frequency(spi_device_handle_t spi)
+uint32_t RFM_Get_Carrier_Frequency(spi_device_handle_t spi)
 {
     uint32_t freq = 0;
     freq |= readReg(spi, REG_FRFMSB) << 16;
     freq |= readReg(spi, REG_FRFMID) << 8;
     freq |= readReg(spi, REG_FRFLSB);
+    freq = (uint32_t)( (float)freq * RF_FSTEP );
+    return freq;
+}
+
+uint32_t RFM_Get_Carrier_Frequency_Burst(spi_device_handle_t spi)
+{
+    uint32_t freq = 0;
+    uint8_t buf[3];
+    SPI_Burst_Read(spi, REG_FRFMSB & 0x7F, buf, 3);
+    freq |= buf[0] << 16;
+    freq |= buf[1] << 8;
+    freq |= buf[2];
     freq = (uint32_t)( (float)freq * RF_FSTEP );
     return freq;
 }
@@ -182,7 +194,7 @@ void rfm_isr_setup()
 
     gpio_set_intr_type(RFM_IRQ, GPIO_PIN_INTR_POSEDGE);
 
-    gpio_install_isr_service(ESP_INTR_FLAG_DEFUALT);
+    gpio_install_isr_service(RFM_ESP_INTR_FLAG_DEFUALT);
 
     gpio_isr_handler_add(RFM_IRQ, rfm_isr_handler, NULL);
 }

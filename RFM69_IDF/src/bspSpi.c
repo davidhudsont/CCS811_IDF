@@ -113,6 +113,37 @@ uint8_t SPI_readReg(spi_device_handle_t spi, const uint8_t address)
 }
 
 
+void SPI_Burst_Read(spi_device_handle_t spi, const uint8_t address, uint8_t * buf, uint32_t size)
+{
+    spi_transaction_t transaction;
+    memset(&transaction, 0 , sizeof(transaction));
+
+    transaction.cmd = address;
+    transaction.length = size*8;
+    transaction.rx_buffer = buf;
+
+    esp_err_t ret;
+    ret = spi_device_polling_transmit(spi, &transaction);
+    assert(ret==ESP_OK);            //Should have had no issues.
+
+}
+
+void SPI_Burst_Write(spi_device_handle_t spi, const uint8_t address, uint8_t * buf, uint32_t size)
+{
+    spi_transaction_t transaction;
+    memset(&transaction, 0 , sizeof(transaction));
+
+    transaction.cmd = address;
+    transaction.length = size*8;
+    transaction.tx_buffer = buf;
+
+    esp_err_t ret;
+    ret = spi_device_polling_transmit(spi, &transaction);
+    assert(ret==ESP_OK);            //Should have had no issues.
+
+}
+
+
 
 
 uint8_t SPI_GetByte8(spi_device_handle_t spi)
