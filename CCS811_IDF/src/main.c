@@ -54,9 +54,12 @@ void app_main()
     //xTaskCreate(&blink_task, "blink_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
 
     BSP_I2C_Setup();
+    while (1)
+    {
+        uint8_t data;
+        data = CCS811_readReg(REG_HW_ID);
+        printf("HW ID: 0x%x\n", (unsigned int) data);
+    }
 
-    uint8_t data;
-    data = CCS811_readReg(REG_HW_ID);
-    printf("HW ID: 0x%x\n", (unsigned int) data);
 
 }

@@ -12,9 +12,11 @@
 void BSP_I2C_Setup();
 
 
-void BSP_I2C_Write_Byte(uint8_t dev_addres, uint8_t reg_address, uint8_t data);
+void BSP_I2C_Write_Byte(uint8_t dev_address, uint8_t reg_address, uint8_t data);
 uint8_t BSP_I2C_Read_Byte(uint8_t dev_address, uint8_t reg_address);
 
 
-void BSP_I2C_Write_Burst(uint8_t dev_addres, uint8_t reg_address, uint8_t data);
-uint8_t BSP_I2C_Read_Burst(uint8_t dev_address, uint8_t * buf);
+void BSP_I2C_Write_Burst(uint8_t dev_address, uint8_t reg_address, uint8_t * buf, uint32_t len);
+void BSP_I2C_Read_Burst(uint8_t dev_address, uint8_t reg_address, uint8_t * buf, uint32_t len);
+
+
