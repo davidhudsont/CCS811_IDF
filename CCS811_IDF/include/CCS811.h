@@ -18,12 +18,8 @@ typedef enum drive_modes {
 
 
 typedef struct ccs811_struct {
-    float refResistance;
-    float resistance;
     uint16_t tVOC;
     uint16_t eCO2;
-    uint16_t vrefCounts;
-    uint16_t ntcCounts;
     float temperature;
 
 } CCS811_STRUCT;
@@ -32,7 +28,14 @@ esp_err_t CCS811_Initialize(CCS811_STRUCT * ccs811);
 
 void CCS811_Set_Drive_Mode(DRIVE_MODES modes, bool intr_data_rdy, bool int_thresh);
 
+bool CCS811_Data_Available(void);
+
 void CCS811_ReadAlgorithm_Results(CCS811_STRUCT * ccs811);
+uint16_t CCS811_Get_CO2(CCS811_STRUCT * ccs811);
+uint16_t CCS811_Get_TVOC(CCS811_STRUCT * ccs811);
+
+void CCS811_Read_NTC(CCS811_STRUCT * ccs811);
+void CCS811_Write_Env(float temperature, float humidity);
 
 void CCS811_Print_Error();
 

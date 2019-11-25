@@ -17,7 +17,16 @@
 #include <string.h>
 #include "CCS811.h"
 
+#define DEBUG_MAIN (1)
+
+
 #define BLINK_GPIO (26)
+
+// time in milliseconds
+void delay(int time)
+{
+    vTaskDelay( time / portTICK_PERIOD_MS);
+}
 
 void blink_task(void *pvParameter)
 {
@@ -46,20 +55,100 @@ void blink_task(void *pvParameter)
 }
 
 
+void ccs811_task(void *pvParameter)
+{
+    CCS811_STRUCT ccs811_device;
+
+    printf("Initialize Device\n");
+    esp_err_t err = CCS811_Initialize(&ccs811_device);
+    if ( err == ESP_FAIL)
+    {
+        printf("Initialization Fail\n");
+        CCS811_Print_Error();
+    }
+
+    if (err == ESP_OK)
+    {
+        printf("Set the Drive Mode\n");
+        CCS811_Set_Drive_Mode(CONSTANT_POWER, false, false);
+    }
+    else
+    {
+        CCS811_Set_Drive_Mode(IDLE, false, false);
+    }
+    
+
+
+    uint8_t data = CCS811_readReg(REG_MEAS_MODE);
+    printf("Measurement Mode: 0x%x\n", (unsigned int)data);
+
+    while (1)
+    {
+        if (CCS811_Data_Available())
+        {
+            CCS811_ReadAlgorithm_Results(&ccs811_device);
+            uint16_t eCO2 = CCS811_Get_CO2(&ccs811_device);
+            printf("eC02 = %d ppm\n",eCO2);
+        }
+        else {
+            data =  CCS811_readReg(REG_STATUS);
+            printf("REG STATUS 0x%x\n", (unsigned int)data);
+            delay(100);
+            data = CCS811_readReg(REG_MEAS_MODE);
+            printf("REG MEAS_MODE 0x%x\n", (unsigned int)data);
+            delay(100);
+            CCS811_Print_Error();
+        }
+        delay(1000);
+    }
+}
+
 
 void app_main()
 {
     printf("Starting Tasks!\n");
-
+#if !DEBUG_MAIN
     //xTaskCreate(&blink_task, "blink_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
+    xTaskCreate(&ccs811_task, "ccs811_task", configMINIMAL_STACK_SIZE*4, NULL, 5, NULL);
+#else 
+    CCS811_STRUCT ccs811_device;
+    memset(&ccs811_device, 0, sizeof(CCS811_STRUCT));
 
     BSP_I2C_Setup();
-    while (1)
+
+    CCS811_writeReg(REG_APP_START, 0x00);
+    delay(2000);
+    while ( (CCS811_readReg(REG_STATUS) & FW_MODE) != FW_MODE)
     {
-        uint8_t data;
-        data = CCS811_readReg(REG_HW_ID);
-        printf("HW ID: 0x%x\n", (unsigned int) data);
+        printf("Put CCS811 into APP Mode\n");
+        CCS811_writeReg(REG_APP_START, 0x00);
+        delay(1000);
+
     }
 
+    if ( (CCS811_readReg(REG_STATUS) & FW_MODE) == FW_MODE)
+    {
+        while ( (CCS811_readReg(REG_MEAS_MODE) & MEAS_1SECOND) != MEAS_1SECOND)
+        {
+            printf("Put CCS811 into Constant Power mode\n");
+            CCS811_writeReg(REG_MEAS_MODE, MEAS_1SECOND);
+            delay(1000);
+        }
+    }
 
+    printf("MEAS MODE: 0x%x\n", (unsigned int) CCS811_readReg(REG_MEAS_MODE));
+
+    while (1)
+    {
+
+        if ( (CCS811_readReg(REG_STATUS) & DATA_READY) == DATA_READY)
+        {
+            CCS811_ReadAlgorithm_Results(&ccs811_device);
+            printf("eC02: %d\n", ccs811_device.eCO2);
+        }
+        delay(1000);
+    }
+
+#endif
+    
 }

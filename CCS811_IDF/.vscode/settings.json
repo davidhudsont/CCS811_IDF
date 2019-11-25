@@ -1,5 +1,13 @@
 {
     "files.associations": {
-        "sdkconfig.h": "c"
+        "sdkconfig.h": "c",
+        "ccs811.h": "c",
+        "ccs811registers.h": "c",
+        "bspi2c.h": "c",
+        "task.h": "c",
+        "freertos.h": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c"
     }
 }
