@@ -26,6 +26,8 @@ typedef struct ccs811_struct {
 
 esp_err_t CCS811_Initialize(CCS811_STRUCT * ccs811);
 
+void CCS811_SW_Reset();
+
 void CCS811_Set_Drive_Mode(DRIVE_MODES modes, bool intr_data_rdy, bool int_thresh);
 
 bool CCS811_Data_Available(void);

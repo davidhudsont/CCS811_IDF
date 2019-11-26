@@ -17,7 +17,7 @@
 #include <string.h>
 #include "CCS811.h"
 
-#define DEBUG_MAIN (1)
+#define DEBUG_MAIN (0)
 
 
 #define BLINK_GPIO (26)
@@ -76,11 +76,6 @@ void ccs811_task(void *pvParameter)
     {
         CCS811_Set_Drive_Mode(IDLE, false, false);
     }
-    
-
-
-    uint8_t data = CCS811_readReg(REG_MEAS_MODE);
-    printf("Measurement Mode: 0x%x\n", (unsigned int)data);
 
     while (1)
     {
@@ -89,15 +84,8 @@ void ccs811_task(void *pvParameter)
             CCS811_ReadAlgorithm_Results(&ccs811_device);
             uint16_t eCO2 = CCS811_Get_CO2(&ccs811_device);
             printf("eC02 = %d ppm\n",eCO2);
-        }
-        else {
-            data =  CCS811_readReg(REG_STATUS);
-            printf("REG STATUS 0x%x\n", (unsigned int)data);
-            delay(100);
-            data = CCS811_readReg(REG_MEAS_MODE);
-            printf("REG MEAS_MODE 0x%x\n", (unsigned int)data);
-            delay(100);
-            CCS811_Print_Error();
+            uint16_t tVOC = CCS811_Get_TVOC(&ccs811_device);
+            printf("tVOC = %d \n",tVOC);
         }
         delay(1000);
     }
@@ -120,8 +108,12 @@ void app_main()
     delay(2000);
     while ( (CCS811_readReg(REG_STATUS) & FW_MODE) != FW_MODE)
     {
+        uint8_t buf[1];
         printf("Put CCS811 into APP Mode\n");
-        CCS811_writeReg(REG_APP_START, 0x00);
+        // To start the application we need to do the following
+        // start - DEV_ADDR | WR - REG_APP_START - STOP
+        CCS811_multiWriteReg(REG_APP_START, buf, 0); 
+        //CCS811_writeReg(REG_APP_START, 0x00);
         delay(1000);
 
     }

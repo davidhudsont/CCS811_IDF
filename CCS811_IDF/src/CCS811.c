@@ -16,13 +16,47 @@ esp_err_t CCS811_Initialize(CCS811_STRUCT * ccs811)
     
     // Start the I2C Bus
     BSP_I2C_Setup();
-    printf("Setup up I2C bus");
 
     // If the device is running skip initialization
     printf("Check if device is initialized\n");
     if ( (CCS811_readReg(REG_STATUS) & FW_MODE) == FW_MODE )
         return ESP_OK;
 
+
+    // Software Reset
+    CCS811_SW_Reset();
+
+    volatile uint8_t temp = 0;
+    for (uint32_t i=0; i<5600000; i++) 
+    {
+        temp++;
+    }
+
+    // Check to see if the device is connected
+    if (CCS811_readReg(REG_HW_ID) != CCS811_HW_ID_VALUE)
+        return ESP_FAIL;
+
+    // Check if the application is valid
+    if ( (CCS811_readReg(REG_STATUS) & APP_VALID) != APP_VALID)
+        return ESP_FAIL;
+
+    // Start the device
+    uint8_t buf[1];
+    CCS811_multiWriteReg(REG_APP_START, buf, 0); 
+
+
+    // Check if the device has started
+    if ((CCS811_readReg(REG_STATUS) & FW_MODE) != FW_MODE  )
+        return ESP_FAIL;
+
+    // Success!
+    return ESP_OK;
+
+}
+
+
+void CCS811_SW_Reset()
+{
     // Reset Code
     uint8_t reset_data[4] = {RESET_CODE_1, 
                             RESET_CODE_2, 
@@ -32,40 +66,9 @@ esp_err_t CCS811_Initialize(CCS811_STRUCT * ccs811)
     // Reset the device to a known state
     printf("Reset the device\n");
     CCS811_multiWriteReg(REG_SW_RESET, reset_data, 4);
-    volatile uint8_t temp = 0;
-    for (uint32_t i=0; i<5600000; i++) 
-    {
-        temp++;
-    }
-    CCS811_Print_Error();
-
-    // Check to see if the device is connected
-    printf("Read the Hardware ID\n");
-    if (CCS811_readReg(REG_HW_ID) != CCS811_HW_ID_VALUE)
-        return ESP_FAIL;
-
-    // Check if the application is valid
-    printf("Check if the application is valid\n");
-    if ( (CCS811_readReg(REG_STATUS) & APP_VALID) != APP_VALID)
-        return ESP_FAIL;
-
-    // Start the device
-    CCS811_writeReg(REG_APP_START, 0x00);
-    CCS811_Print_Error();
-
-    // Check if the device has started
-    printf("Check if the device has started!\n");
-    uint8_t data = CCS811_readReg(REG_STATUS);
-    printf("Check status: 0x%x\n", (unsigned int)data);
-
-    if ((CCS811_readReg(REG_STATUS) & FW_MODE) != FW_MODE  )
-        return ESP_FAIL;
-
-    // Success!
-    printf("Succes!\n");
-    return ESP_OK;
 
 }
+
 
 
 bool CCS811_Data_Available(void)
