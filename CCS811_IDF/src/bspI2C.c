@@ -48,8 +48,10 @@ void BSP_I2C_Write_Byte(uint8_t dev_address, uint8_t reg_address, uint8_t data)
     i2c_master_write_byte(cmd, reg_address, true);
     i2c_master_write_byte(cmd, data, true);
     i2c_master_stop(cmd);
-    err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 4000/portTICK_RATE_MS);
-    ESP_ERROR_CHECK(err);
+    err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, I2C_TIMEOUT/portTICK_RATE_MS);
+    if (err != ESP_ERR_TIMEOUT) // Currently don't care about timeout
+        ESP_ERROR_CHECK(err);
+        
     i2c_cmd_link_delete(cmd);
 
 }
@@ -75,8 +77,10 @@ uint8_t BSP_I2C_Read_Byte(uint8_t dev_address, uint8_t reg_address)
     i2c_master_write_byte(cmd, master_write, true);
     i2c_master_write_byte(cmd, reg_address, true);
     i2c_master_stop(cmd);
-    err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 4000/portTICK_RATE_MS);
-    ESP_ERROR_CHECK(err);
+    err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, I2C_TIMEOUT/portTICK_RATE_MS);
+    if (err != ESP_ERR_TIMEOUT) // Currently don't care about timeout
+        ESP_ERROR_CHECK(err);
+
     i2c_cmd_link_delete(cmd);
 
     // Register to read
@@ -85,8 +89,9 @@ uint8_t BSP_I2C_Read_Byte(uint8_t dev_address, uint8_t reg_address)
     i2c_master_write_byte(cmd, master_read, true);
     i2c_master_read_byte(cmd, &data, I2C_MASTER_NACK);
     i2c_master_stop(cmd);
-    err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 4000/portTICK_RATE_MS);
-    ESP_ERROR_CHECK(err);
+    err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, I2C_TIMEOUT/portTICK_RATE_MS);
+    if (err != ESP_ERR_TIMEOUT) // Currently don't care about timeout
+        ESP_ERROR_CHECK(err);
 
     i2c_cmd_link_delete(cmd);
 
@@ -115,8 +120,10 @@ void BSP_I2C_Read_Burst(uint8_t dev_address, uint8_t reg_address, uint8_t * buf,
     i2c_master_write_byte(cmd, master_write, true);
     i2c_master_write_byte(cmd, reg_address, I2C_MASTER_LAST_NACK);
     i2c_master_stop(cmd);
-    err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 4000/portTICK_RATE_MS);
-    ESP_ERROR_CHECK(err);
+    err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, I2C_TIMEOUT/portTICK_RATE_MS);
+    if (err != ESP_ERR_TIMEOUT) // Currently don't care about timeout
+        ESP_ERROR_CHECK(err);
+
     i2c_cmd_link_delete(cmd);
 
     // Register Read
@@ -125,8 +132,9 @@ void BSP_I2C_Read_Burst(uint8_t dev_address, uint8_t reg_address, uint8_t * buf,
     i2c_master_write_byte(cmd, master_read, true);
     i2c_master_read(cmd, buf, len, I2C_MASTER_LAST_NACK);
     i2c_master_stop(cmd);
-    err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 4000/portTICK_RATE_MS);
-    ESP_ERROR_CHECK(err);
+    err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, I2C_TIMEOUT/portTICK_RATE_MS);
+    if (err != ESP_ERR_TIMEOUT) // Currently don't care about timeout
+        ESP_ERROR_CHECK(err);
 
     i2c_cmd_link_delete(cmd);
 
@@ -150,8 +158,9 @@ void BSP_I2C_Write_Burst(uint8_t dev_address, uint8_t reg_address, uint8_t * buf
     i2c_master_write_byte(cmd, reg_address, true);
     i2c_master_write(cmd, buf, len, true);
     i2c_master_stop(cmd);
-    err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 4000/portTICK_RATE_MS);
-    ESP_ERROR_CHECK(err);
+    err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, I2C_TIMEOUT/portTICK_RATE_MS);
+    if (err != ESP_ERR_TIMEOUT) // Currently don't care about timeout
+        ESP_ERROR_CHECK(err);
 
     i2c_cmd_link_delete(cmd);
 

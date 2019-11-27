@@ -18,14 +18,13 @@ esp_err_t CCS811_Initialize(CCS811_STRUCT * ccs811)
     BSP_I2C_Setup();
 
     // If the device is running skip initialization
-    printf("Check if device is initialized\n");
     if ( (CCS811_readReg(REG_STATUS) & FW_MODE) == FW_MODE )
         return ESP_OK;
-
 
     // Software Reset
     CCS811_SW_Reset();
 
+    // Wait until the device finishes reseting
     volatile uint8_t temp = 0;
     for (uint32_t i=0; i<5600000; i++) 
     {
@@ -55,6 +54,10 @@ esp_err_t CCS811_Initialize(CCS811_STRUCT * ccs811)
 }
 
 
+/**
+ * @brief Reset the CCS811 into boot mode
+ * 
+ */
 void CCS811_SW_Reset()
 {
     // Reset Code
@@ -64,17 +67,19 @@ void CCS811_SW_Reset()
                             RESET_CODE_4};
 
     // Reset the device to a known state
-    printf("Reset the device\n");
     CCS811_multiWriteReg(REG_SW_RESET, reset_data, 4);
 
 }
 
 
-
+/**
+ * @brief Check if new data is available
+ * 
+ * @return bool
+ */
 bool CCS811_Data_Available(void)
 {
-    uint8_t value;
-    value = CCS811_readReg(REG_STATUS);
+    uint8_t value = CCS811_readReg(REG_STATUS);
 
     if ( (value & DATA_READY) ==  DATA_READY)
     {
@@ -158,7 +163,6 @@ void CCS811_Set_Drive_Mode(DRIVE_MODES modes, bool intr_data_rdy, bool int_thres
     data |= intr_data_rdy ? MEAS_INT_DATARDY : 0x00;
     data |= int_thresh ? MEAS_INT_THRESH : 0x00;
 
-    printf("Meas mode : 0x%x\n", (unsigned int)data);
     CCS811_writeReg(REG_MEAS_MODE, data);
 
 }
@@ -168,12 +172,12 @@ void CCS811_Set_Drive_Mode(DRIVE_MODES modes, bool intr_data_rdy, bool int_thres
  * @brief Calculate the temperature from the thermistor
  *        and store it.
  * 
- *  Equation: B = log(R/Ro)/(1/T - 1/To)
- *            (1/T - 1/To) = log(R/Ro)/B
- *            1/T = log(R/Ro)/B + 1/To
- *            T = 1/(log(R/Ro)/B + 1/To)
+ *  Equation: 1. B = log(R/Ro)/(1/T - 1/To)
+ *            2. (1/T - 1/To) = log(R/Ro)/B
+ *            3. 1/T = log(R/Ro)/B + 1/To
+ *            4. T = 1/(log(R/Ro)/B + 1/To)
  * 
- * @param ccs811 
+ * @param ccs811 - CCS811 device struct
  */
 void CCS811_Read_NTC(CCS811_STRUCT * ccs811)
 {
@@ -183,7 +187,12 @@ void CCS811_Read_NTC(CCS811_STRUCT * ccs811)
     uint16_t vRef = (uint16_t) (data[0] << 8 | data[1]);
     uint16_t vNTC = (uint16_t) (data[2] << 8 | data[3]);
 
+    printf("vRef =%d\n",vRef);
+    printf("vNTC =%d\n",vNTC);
+
     uint32_t Rntc = vNTC * Rref / vRef;
+    printf("vRntc =%d\n", Rntc);
+
 
     float ntc_temp;
     ntc_temp = logf( Rntc / RNTC_25C);
@@ -196,8 +205,28 @@ void CCS811_Read_NTC(CCS811_STRUCT * ccs811)
 
 }
 
-void CCS811_Write_Env(float temperature, float relativeHumidity) {
-    	//Check for invalid temperatures
+
+/**
+ * @brief 
+ * 
+ * @param ccs8111 
+ * @return float 
+ */
+float CCS811_Get_Temperature(CCS811_STRUCT * ccs811)
+{
+    return ccs811->temperature;
+}
+
+
+/**
+ * @brief Write environmental data to the CCS811
+ * 
+ * @param temperature - In degrees Celsius
+ * @param relativeHumidity 
+ */
+void CCS811_Write_Env(float temperature, float relativeHumidity) 
+{
+    //Check for invalid temperatures
 	if((temperature < -25)||(temperature > 50)) return;
 	
 	//Check for invalid humidity
@@ -244,6 +273,7 @@ void CCS811_Print_Error()
         printf("HEATER_SUPPLY\n");
 
 }
+
 
 /**
  * @brief Read a CCS811 register

@@ -37,6 +37,8 @@ uint16_t CCS811_Get_CO2(CCS811_STRUCT * ccs811);
 uint16_t CCS811_Get_TVOC(CCS811_STRUCT * ccs811);
 
 void CCS811_Read_NTC(CCS811_STRUCT * ccs811);
+float CCS811_Get_Temperature(CCS811_STRUCT * ccs811);
+
 void CCS811_Write_Env(float temperature, float humidity);
 
 void CCS811_Print_Error();

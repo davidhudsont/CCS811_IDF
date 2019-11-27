@@ -17,8 +17,6 @@
 #include <string.h>
 #include "CCS811.h"
 
-#define DEBUG_MAIN (0)
-
 
 #define BLINK_GPIO (26)
 
@@ -82,10 +80,13 @@ void ccs811_task(void *pvParameter)
         if (CCS811_Data_Available())
         {
             CCS811_ReadAlgorithm_Results(&ccs811_device);
+            CCS811_Read_NTC(&ccs811_device);
             uint16_t eCO2 = CCS811_Get_CO2(&ccs811_device);
             printf("eC02 = %d ppm\n",eCO2);
             uint16_t tVOC = CCS811_Get_TVOC(&ccs811_device);
-            printf("tVOC = %d \n",tVOC);
+            printf("tVOC = %d\n",tVOC);
+            float temperature = CCS811_Get_Temperature(&ccs811_device);
+            printf("Temperature C = %f\n", temperature);
         }
         delay(1000);
     }
@@ -95,52 +96,7 @@ void ccs811_task(void *pvParameter)
 void app_main()
 {
     printf("Starting Tasks!\n");
-#if !DEBUG_MAIN
     //xTaskCreate(&blink_task, "blink_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
     xTaskCreate(&ccs811_task, "ccs811_task", configMINIMAL_STACK_SIZE*4, NULL, 5, NULL);
-#else 
-    CCS811_STRUCT ccs811_device;
-    memset(&ccs811_device, 0, sizeof(CCS811_STRUCT));
-
-    BSP_I2C_Setup();
-
-    CCS811_writeReg(REG_APP_START, 0x00);
-    delay(2000);
-    while ( (CCS811_readReg(REG_STATUS) & FW_MODE) != FW_MODE)
-    {
-        uint8_t buf[1];
-        printf("Put CCS811 into APP Mode\n");
-        // To start the application we need to do the following
-        // start - DEV_ADDR | WR - REG_APP_START - STOP
-        CCS811_multiWriteReg(REG_APP_START, buf, 0); 
-        //CCS811_writeReg(REG_APP_START, 0x00);
-        delay(1000);
-
-    }
-
-    if ( (CCS811_readReg(REG_STATUS) & FW_MODE) == FW_MODE)
-    {
-        while ( (CCS811_readReg(REG_MEAS_MODE) & MEAS_1SECOND) != MEAS_1SECOND)
-        {
-            printf("Put CCS811 into Constant Power mode\n");
-            CCS811_writeReg(REG_MEAS_MODE, MEAS_1SECOND);
-            delay(1000);
-        }
-    }
-
-    printf("MEAS MODE: 0x%x\n", (unsigned int) CCS811_readReg(REG_MEAS_MODE));
-
-    while (1)
-    {
-
-        if ( (CCS811_readReg(REG_STATUS) & DATA_READY) == DATA_READY)
-        {
-            CCS811_ReadAlgorithm_Results(&ccs811_device);
-            printf("eC02: %d\n", ccs811_device.eCO2);
-        }
-        delay(1000);
-    }
-
-#endif
     
 }

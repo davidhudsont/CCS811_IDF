@@ -3,9 +3,11 @@
 #ifndef _CCS811_REGISTERS_H_
 #define _CCS811_REGISTERS_H_
 
+// Devices Addresses
 #define CCS811_DEV_ADDR_A   (0x5A)
 #define CCS811_DEV_ADDR_B   (0x5B)
 
+// Register Addresses
 #define REG_STATUS              (0x00) // 1 bytes (R) Status register
 #define REG_MEAS_MODE           (0x01) // 1 bytes (R/W) Measurement mode and conditions register
 #define REG_ALG_DATA            (0x02) // 8 bytes (R) Algorithm result
@@ -20,11 +22,12 @@
 #define REG_FW_APP_VERSION      (0x23) // 2 bytes (R) Firmware Application Version
 #define REG_INTERNAL_STATE      (0xA0) // 1 bytes (R) Internal Status register
 #define REG_ERROR_ID            (0xE0) // 1 bytes (R) Error ID
-#define REG_APP_START           (0xF4) // APP_START write 0 to it
+#define REG_APP_START           (0xF4) // 0 bytes APP_START
 #define REG_SW_RESET            (0xFF) // 4 bytes (W) Software Reset
 
 #define CCS811_HW_ID_VALUE  (0x81)
 
+// Values for REG_STATUS
 #define FW_MODE         (0x80)
 #define APP_ERASE       (0x40)
 #define APP_VERIFY      (0x20)
@@ -32,6 +35,7 @@
 #define DATA_READY      (0x08)
 #define ERROR           (0x01)
 
+// Values for REG_MEAS_MODE
 #define MEAS_IDLE       (0x00)
 #define MEAS_1SECOND    (0x10)
 #define MEAS_10SECOND   (0x20)
@@ -41,7 +45,7 @@
 #define MEAS_INT_DATARDY (0x08)
 #define MEAS_INT_THRESH  (0x04)
 
-
+// Reset Codes for SW Reset
 #define RESET_CODE_1    (0x11)
 #define RESET_CODE_2    (0xE5)
 #define RESET_CODE_3    (0x72)
@@ -55,7 +59,7 @@
 #define HEATER_FAULT        (0x10)
 #define HEATER_SUPPLY       (0x20)
 
-
+// NTC Values
 #define Rref (10000) // 10kOhm Resistor
 #define RNTC_25C (10000) // Thermistor resistance at 25C
 #define BCONSTANT (3977) // BConstant for a 10k Thermistor
