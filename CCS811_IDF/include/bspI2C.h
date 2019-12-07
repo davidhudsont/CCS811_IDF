@@ -9,7 +9,7 @@
 #define I2C_MASTER_FREQ (100000) // 100 KHz
 #define I2C_MASTER_NUM (1)
 
-#define I2C_TIMEOUT (10000) // 10000ms = 10s
+#define I2C_TIMEOUT (10) // 1000ms = 1s
 
 void BSP_I2C_Setup();
 

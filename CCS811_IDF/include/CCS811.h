@@ -7,6 +7,8 @@
 #ifndef _CCS811_H_
 #define _CCS811_H_
 
+#define CCS811_INTR_PIN_NUM (4)
+#define CCS811_INTR_FLAGS_DEFAULT (0)
 
 typedef enum drive_modes {
     IDLE            = 0,  // Sleep Mode         
@@ -21,6 +23,8 @@ typedef struct ccs811_struct {
     uint16_t tVOC;
     uint16_t eCO2;
     float temperature;
+    uint32_t counter;
+    bool data_ready;
 
 } CCS811_STRUCT;
 
@@ -35,6 +39,8 @@ bool CCS811_Data_Available(void);
 void CCS811_ReadAlgorithm_Results(CCS811_STRUCT * ccs811);
 uint16_t CCS811_Get_CO2(CCS811_STRUCT * ccs811);
 uint16_t CCS811_Get_TVOC(CCS811_STRUCT * ccs811);
+
+void CCS811_ISR_Init(CCS811_STRUCT * ccs811);
 
 void CCS811_Read_NTC(CCS811_STRUCT * ccs811);
 float CCS811_Get_Temperature(CCS811_STRUCT * ccs811);

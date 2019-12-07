@@ -80,14 +80,57 @@ void ccs811_task(void *pvParameter)
         if (CCS811_Data_Available())
         {
             CCS811_ReadAlgorithm_Results(&ccs811_device);
-            CCS811_Read_NTC(&ccs811_device);
+            //CCS811_Read_NTC(&ccs811_device);
             uint16_t eCO2 = CCS811_Get_CO2(&ccs811_device);
             printf("eC02 = %d ppm\n",eCO2);
             uint16_t tVOC = CCS811_Get_TVOC(&ccs811_device);
             printf("tVOC = %d\n",tVOC);
-            float temperature = CCS811_Get_Temperature(&ccs811_device);
-            printf("Temperature C = %f\n", temperature);
         }
+        delay(1000);
+    }
+}
+
+
+void ccs811_task_intr(void *pvParameter)
+{
+    CCS811_STRUCT ccs811_device;
+    uint16_t eCO2 = 201;
+    uint16_t tVOC = 909;
+
+    printf("Initialize Device\n");
+    esp_err_t err = CCS811_Initialize(&ccs811_device);
+    if ( err == ESP_FAIL)
+    {
+        printf("Initialization Fail\n");
+        CCS811_Print_Error();
+    }
+    CCS811_ISR_Init(&ccs811_device);
+
+    if (err == ESP_OK)
+    {
+        printf("Set the Drive Mode\n");
+        CCS811_Set_Drive_Mode(CONSTANT_POWER, true, false);
+    }
+    else
+    {
+        CCS811_Set_Drive_Mode(IDLE, false, false);
+    }
+
+    //CCS811_ReadAlgorithm_Results(&ccs811_device);
+    delay(1000);
+
+
+    while (1)
+    {
+        //reg = CCS811_readReg(REG_STATUS);
+        //printf("Reg Satus: 0x%x\n", (unsigned int)reg);
+        //CCS811_ReadAlgorithm_Results(&ccs811_device);
+        eCO2 = CCS811_Get_CO2(&ccs811_device);
+        printf("eC02 = %d ppm\n",eCO2);
+        tVOC = CCS811_Get_TVOC(&ccs811_device);
+        printf("tVOC = %d\n",tVOC);
+        printf("Counter = %d\n", ccs811_device.counter);        
+        
         delay(1000);
     }
 }
@@ -97,6 +140,7 @@ void app_main()
 {
     printf("Starting Tasks!\n");
     //xTaskCreate(&blink_task, "blink_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
-    xTaskCreate(&ccs811_task, "ccs811_task", configMINIMAL_STACK_SIZE*4, NULL, 5, NULL);
+    //xTaskCreate(&ccs811_task, "ccs811_task", configMINIMAL_STACK_SIZE*4, NULL, 5, NULL);
+    xTaskCreate(&ccs811_task_intr, "ccs811_task_intr", configMINIMAL_STACK_SIZE*6, NULL, 5, NULL);
     
 }

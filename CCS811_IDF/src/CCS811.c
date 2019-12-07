@@ -1,6 +1,9 @@
 
 
 #include "CCS811.h"
+#include <driver/gpio.h>
+#include "freertos/queue.h"
+#include "freertos/event_groups.h"
 #include <math.h>
 
 /**
@@ -110,6 +113,8 @@ void CCS811_ReadAlgorithm_Results(CCS811_STRUCT * ccs811)
     ccs811->eCO2 = ((uint16_t)data[0] << 8) | data[1];
     ccs811->tVOC = ((uint16_t)data[2] << 8) | data[3];
 
+    printf("Algo eCO2 : %d\n", ccs811->eCO2);
+
 }
 
 
@@ -168,9 +173,54 @@ void CCS811_Set_Drive_Mode(DRIVE_MODES modes, bool intr_data_rdy, bool int_thres
 }
 
 
+static void IRAM_ATTR data_ready_isr_handler(void * arg)
+{
+    CCS811_STRUCT * ccs811_dev =  arg;
+    ccs811_dev->counter += 1;
+    esp_err_t err;
+    err = gpio_intr_disable(CCS811_INTR_PIN_NUM);
+    ESP_ERROR_CHECK(err);
+    
+    err = gpio_intr_enable(CCS811_INTR_PIN_NUM);
+    ESP_ERROR_CHECK(err);
+
+}
+
+
+void CCS811_ISR_Init(CCS811_STRUCT * ccs811)
+{
+    gpio_config_t io_conf;
+
+    // Interrupt on the negative edge
+    io_conf.intr_type = GPIO_PIN_INTR_NEGEDGE;
+
+    // Set bit 4 to 1 in the bit mask
+    io_conf.pin_bit_mask = 1ULL << CCS811_INTR_PIN_NUM;
+
+    // Set to input mode
+    io_conf.mode = GPIO_MODE_INPUT;
+
+    // enable pull-up
+    io_conf.pull_up_en = false;
+    io_conf.pull_down_en = true;
+
+    gpio_config(&io_conf);
+
+    gpio_set_intr_type(CCS811_INTR_PIN_NUM, GPIO_PIN_INTR_NEGEDGE);
+
+    gpio_install_isr_service(CCS811_INTR_FLAGS_DEFAULT);
+
+    gpio_isr_handler_add(CCS811_INTR_PIN_NUM, data_ready_isr_handler, (void*) ccs811);
+
+}
+
+
+
 /**
  * @brief Calculate the temperature from the thermistor
- *        and store it.
+ *        and store it. 
+ * 
+ * The NTC register is no longer document in the CCS811 data sheet
  * 
  *  Equation: 1. B = log(R/Ro)/(1/T - 1/To)
  *            2. (1/T - 1/To) = log(R/Ro)/B
@@ -183,9 +233,15 @@ void CCS811_Read_NTC(CCS811_STRUCT * ccs811)
 {
     uint8_t data[4];
     CCS811_multiReadReg(REG_NTC, data, 4);
+    CCS811_Print_Error();
 
-    uint16_t vRef = (uint16_t) (data[0] << 8 | data[1]);
-    uint16_t vNTC = (uint16_t) (data[2] << 8 | data[3]);
+    uint16_t vRef = (uint16_t) ((uint16_t) data[0] << 8 | data[1]);
+    uint16_t vNTC = (uint16_t) ((uint16_t) data[2] << 8 | data[3]);
+
+    for (int i =0; i<4; i++)
+    {
+        printf("DATA[%d] = 0x%x\n", i, (unsigned int) data[i]);
+    }
 
     printf("vRef =%d\n",vRef);
     printf("vNTC =%d\n",vNTC);
