@@ -175,21 +175,24 @@ void CCS811_Set_Drive_Mode(DRIVE_MODES modes, bool intr_data_rdy, bool int_thres
 
 static void IRAM_ATTR data_ready_isr_handler(void * arg)
 {
+    char buf[5];
+    buf[0] = 'r';
+    BaseType_t base;
+
     CCS811_STRUCT * ccs811_dev =  arg;
     ccs811_dev->counter += 1;
-    esp_err_t err;
-    err = gpio_intr_disable(CCS811_INTR_PIN_NUM);
-    ESP_ERROR_CHECK(err);
     
-    err = gpio_intr_enable(CCS811_INTR_PIN_NUM);
-    ESP_ERROR_CHECK(err);
-
+    xQueueSendFromISR(queue, (void *)buf, &base);
+    
 }
 
 
 void CCS811_ISR_Init(CCS811_STRUCT * ccs811)
 {
     gpio_config_t io_conf;
+
+    queue = xQueueCreate(3, 5);
+
 
     // Interrupt on the negative edge
     io_conf.intr_type = GPIO_PIN_INTR_NEGEDGE;

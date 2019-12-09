@@ -7,6 +7,9 @@
 #ifndef _CCS811_H_
 #define _CCS811_H_
 
+
+QueueHandle_t queue;
+
 #define CCS811_INTR_PIN_NUM (4)
 #define CCS811_INTR_FLAGS_DEFAULT (0)
 

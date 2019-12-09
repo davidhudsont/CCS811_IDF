@@ -17,6 +17,7 @@
 #include <string.h>
 #include "CCS811.h"
 
+QueueHandle_t queue;
 
 #define BLINK_GPIO (26)
 
@@ -96,6 +97,7 @@ void ccs811_task_intr(void *pvParameter)
     CCS811_STRUCT ccs811_device;
     uint16_t eCO2 = 201;
     uint16_t tVOC = 909;
+    char buf[5];
 
     printf("Initialize Device\n");
     esp_err_t err = CCS811_Initialize(&ccs811_device);
@@ -116,22 +118,24 @@ void ccs811_task_intr(void *pvParameter)
         CCS811_Set_Drive_Mode(IDLE, false, false);
     }
 
-    //CCS811_ReadAlgorithm_Results(&ccs811_device);
+    CCS811_ReadAlgorithm_Results(&ccs811_device);
     delay(1000);
 
 
     while (1)
     {
-        //reg = CCS811_readReg(REG_STATUS);
-        //printf("Reg Satus: 0x%x\n", (unsigned int)reg);
-        //CCS811_ReadAlgorithm_Results(&ccs811_device);
-        eCO2 = CCS811_Get_CO2(&ccs811_device);
-        printf("eC02 = %d ppm\n",eCO2);
-        tVOC = CCS811_Get_TVOC(&ccs811_device);
-        printf("tVOC = %d\n",tVOC);
-        printf("Counter = %d\n", ccs811_device.counter);        
-        
-        delay(1000);
+        xQueueReceive(queue, buf, 10);
+        if (buf[0] == 'r')
+        {
+            CCS811_ReadAlgorithm_Results(&ccs811_device);
+            eCO2 = CCS811_Get_CO2(&ccs811_device);
+            printf("eC02 = %d ppm\n",eCO2);
+            tVOC = CCS811_Get_TVOC(&ccs811_device);
+            printf("tVOC = %d\n",tVOC);
+            printf("Counter = %d\n", ccs811_device.counter);  
+            buf[0] = ' ';
+        }
+        //delay(1000);
     }
 }
 
