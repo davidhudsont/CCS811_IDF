@@ -19,9 +19,13 @@
 
 QueueHandle_t queue;
 
-#define BLINK_GPIO (26)
+#define BLINK_GPIO (5)
 
-// time in milliseconds
+/**
+ * @brief Delay a task for a specified amount of time
+ * 
+ * @param time - time in milliseconds
+ */
 void delay(int time)
 {
     vTaskDelay( time / portTICK_PERIOD_MS);
@@ -97,7 +101,7 @@ void ccs811_task_intr(void *pvParameter)
     CCS811_STRUCT ccs811_device;
     uint16_t eCO2 = 201;
     uint16_t tVOC = 909;
-    char buf[5];
+    char msg;
 
     printf("Initialize Device\n");
     esp_err_t err = CCS811_Initialize(&ccs811_device);
@@ -124,8 +128,8 @@ void ccs811_task_intr(void *pvParameter)
 
     while (1)
     {
-        xQueueReceive(queue, buf, 10);
-        if (buf[0] == 'r')
+        xQueueReceive(queue, &msg, 10);
+        if (msg == 'r')
         {
             CCS811_ReadAlgorithm_Results(&ccs811_device);
             eCO2 = CCS811_Get_CO2(&ccs811_device);
@@ -133,7 +137,7 @@ void ccs811_task_intr(void *pvParameter)
             tVOC = CCS811_Get_TVOC(&ccs811_device);
             printf("tVOC = %d\n",tVOC);
             printf("Counter = %d\n", ccs811_device.counter);  
-            buf[0] = ' ';
+            msg = ' ';
         }
         //delay(1000);
     }
@@ -143,8 +147,8 @@ void ccs811_task_intr(void *pvParameter)
 void app_main()
 {
     printf("Starting Tasks!\n");
-    //xTaskCreate(&blink_task, "blink_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
+    xTaskCreate(&blink_task, "blink_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
     //xTaskCreate(&ccs811_task, "ccs811_task", configMINIMAL_STACK_SIZE*4, NULL, 5, NULL);
-    xTaskCreate(&ccs811_task_intr, "ccs811_task_intr", configMINIMAL_STACK_SIZE*6, NULL, 5, NULL);
+    xTaskCreate(&ccs811_task_intr, "ccs811_task_intr", configMINIMAL_STACK_SIZE*6, NULL, 6, NULL);
     
 }

@@ -10,8 +10,8 @@
 
 QueueHandle_t queue;
 
-#define CCS811_INTR_PIN_NUM (4)
-#define CCS811_INTR_FLAGS_DEFAULT (0)
+#define CCS811_INTR_PIN_NUM (4) // Interrupt pin connected to CCS811 Intr pin
+#define CCS811_INTR_FLAGS_DEFAULT (0) // Interrupt Flags
 
 typedef enum drive_modes {
     IDLE            = 0,  // Sleep Mode         
@@ -23,11 +23,15 @@ typedef enum drive_modes {
 
 
 typedef struct ccs811_struct {
-    uint16_t tVOC;
-    uint16_t eCO2;
+    uint16_t tVOC;          // Current tVOC reading
+    uint16_t eCO2;          // Current eC02 reading
+    uint16_t low_to_med;    // low to medium threshold
+    uint16_t med_to_high;   // medium to high threshold
+    uint16_t baseline;      // Baseline
+#if NTC_REG_EXISTS
     float temperature;
+#endif
     uint32_t counter;
-    bool data_ready;
 
 } CCS811_STRUCT;
 
@@ -49,6 +53,8 @@ void CCS811_Read_NTC(CCS811_STRUCT * ccs811);
 float CCS811_Get_Temperature(CCS811_STRUCT * ccs811);
 
 void CCS811_Write_Env(float temperature, float humidity);
+void CCS811_Write_Threshold(CCS811_STRUCT * ccs811, uint16_t low_to_med, uint16_t med_to_high);
+void CCS811_Write_Baseline(CCS811_STRUCT * ccs811, uint16_t baseline);
 
 void CCS811_Print_Error();
 

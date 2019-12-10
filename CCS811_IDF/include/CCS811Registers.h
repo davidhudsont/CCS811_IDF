@@ -60,6 +60,7 @@
 #define HEATER_SUPPLY       (0x20)
 
 // NTC Values
+#define NTC_REG_EXISTS (0)
 #define Rref (10000) // 10kOhm Resistor
 #define RNTC_25C (10000) // Thermistor resistance at 25C
 #define BCONSTANT (3977) // BConstant for a 10k Thermistor

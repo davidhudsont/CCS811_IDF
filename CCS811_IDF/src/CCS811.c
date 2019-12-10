@@ -104,16 +104,13 @@ bool CCS811_Data_Available(void)
 void CCS811_ReadAlgorithm_Results(CCS811_STRUCT * ccs811)
 {
     uint8_t data[4];
-    uint32_t len = 4;
     
     // Read the eC02 and tVOC registers
-    CCS811_multiReadReg(REG_ALG_DATA, data, len);
+    CCS811_multiReadReg(REG_ALG_DATA, data, 4);
 
     // Store into CCS811 struct
     ccs811->eCO2 = ((uint16_t)data[0] << 8) | data[1];
     ccs811->tVOC = ((uint16_t)data[2] << 8) | data[3];
-
-    printf("Algo eCO2 : %d\n", ccs811->eCO2);
 
 }
 
@@ -159,7 +156,16 @@ void CCS811_Set_Drive_Mode(DRIVE_MODES modes, bool intr_data_rdy, bool int_thres
         break;
     case CONSTANT_POWER:
         data |= MEAS_1SECOND;
-    
+        break;
+    case PULSE_HEATING:
+        data |= MEAS_10SECOND;
+        break;
+    case LOW_POWER:
+        data |= MEAS_60SECOND;
+        break;
+    case FAST_MODE:
+        data |= MEAS_4HZ;
+        break;
     default:
         data |= MEAS_IDLE;
         break;
@@ -175,29 +181,34 @@ void CCS811_Set_Drive_Mode(DRIVE_MODES modes, bool intr_data_rdy, bool int_thres
 
 static void IRAM_ATTR data_ready_isr_handler(void * arg)
 {
-    char buf[5];
-    buf[0] = 'r';
+    char msg = 'r';
     BaseType_t base;
 
     CCS811_STRUCT * ccs811_dev =  arg;
     ccs811_dev->counter += 1;
     
-    xQueueSendFromISR(queue, (void *)buf, &base);
+    xQueueSendFromISR(queue, (void *)&msg, &base);
     
 }
 
 
+/**
+ * @brief If using data ready interrupt 
+ * 
+ * @param ccs811 - ccs811 device struct
+ */
 void CCS811_ISR_Init(CCS811_STRUCT * ccs811)
 {
     gpio_config_t io_conf;
 
-    queue = xQueueCreate(3, 5);
-
+    // Create a queue to communicate data is ready
+    queue = xQueueCreate(3, 1);
 
     // Interrupt on the negative edge
+    // Data ready pin is pulled down when data is ready
     io_conf.intr_type = GPIO_PIN_INTR_NEGEDGE;
 
-    // Set bit 4 to 1 in the bit mask
+    // Set CCS811_INTR_PIN_NUM to 1 in the bit mask
     io_conf.pin_bit_mask = 1ULL << CCS811_INTR_PIN_NUM;
 
     // Set to input mode
@@ -218,64 +229,65 @@ void CCS811_ISR_Init(CCS811_STRUCT * ccs811)
 }
 
 
-
-/**
- * @brief Calculate the temperature from the thermistor
- *        and store it. 
- * 
- * The NTC register is no longer document in the CCS811 data sheet
- * 
- *  Equation: 1. B = log(R/Ro)/(1/T - 1/To)
- *            2. (1/T - 1/To) = log(R/Ro)/B
- *            3. 1/T = log(R/Ro)/B + 1/To
- *            4. T = 1/(log(R/Ro)/B + 1/To)
- * 
- * @param ccs811 - CCS811 device struct
- */
-void CCS811_Read_NTC(CCS811_STRUCT * ccs811)
-{
-    uint8_t data[4];
-    CCS811_multiReadReg(REG_NTC, data, 4);
-    CCS811_Print_Error();
-
-    uint16_t vRef = (uint16_t) ((uint16_t) data[0] << 8 | data[1]);
-    uint16_t vNTC = (uint16_t) ((uint16_t) data[2] << 8 | data[3]);
-
-    for (int i =0; i<4; i++)
+#if NTC_REG_EXISTS
+    /**
+     * @brief Calculate the temperature from the thermistor
+     *        and store it. 
+     * 
+     * The NTC register is no longer document in the CCS811 data sheet
+     * so this function most likely doesn't do anything.
+     * 
+     *  Equation: 1. B = log(R/Ro)/(1/T - 1/To)
+     *            2. (1/T - 1/To) = log(R/Ro)/B
+     *            3. 1/T = log(R/Ro)/B + 1/To
+     *            4. T = 1/(log(R/Ro)/B + 1/To)
+     * 
+     * @param ccs811 - CCS811 device struct
+     */
+    void CCS811_Read_NTC(CCS811_STRUCT * ccs811)
     {
-        printf("DATA[%d] = 0x%x\n", i, (unsigned int) data[i]);
+        uint8_t data[4];
+        CCS811_multiReadReg(REG_NTC, data, 4);
+        CCS811_Print_Error();
+
+        uint16_t vRef = (uint16_t) ((uint16_t) data[0] << 8 | data[1]);
+        uint16_t vNTC = (uint16_t) ((uint16_t) data[2] << 8 | data[3]);
+
+        for (int i =0; i<4; i++)
+        {
+            printf("DATA[%d] = 0x%x\n", i, (unsigned int) data[i]);
+        }
+
+        printf("vRef =%d\n",vRef);
+        printf("vNTC =%d\n",vNTC);
+
+        uint32_t Rntc = vNTC * Rref / vRef;
+        printf("vRntc =%d\n", Rntc);
+
+
+        float ntc_temp;
+        ntc_temp = logf( Rntc / RNTC_25C);
+        ntc_temp /= BCONSTANT;
+        ntc_temp += 1.0 / (RNTC_TEMP + 273.15f);
+        ntc_temp = 1.0 / ntc_temp;
+        ntc_temp -= 273.15;
+
+        ccs811->temperature = ntc_temp;
+
     }
 
-    printf("vRef =%d\n",vRef);
-    printf("vNTC =%d\n",vNTC);
 
-    uint32_t Rntc = vNTC * Rref / vRef;
-    printf("vRntc =%d\n", Rntc);
-
-
-    float ntc_temp;
-    ntc_temp = logf( Rntc / RNTC_25C);
-    ntc_temp /= BCONSTANT;
-    ntc_temp += 1.0 / (RNTC_TEMP + 273.15f);
-    ntc_temp = 1.0 / ntc_temp;
-    ntc_temp -= 273.15;
-
-    ccs811->temperature = ntc_temp;
-
-}
-
-
-/**
- * @brief 
- * 
- * @param ccs8111 
- * @return float 
- */
-float CCS811_Get_Temperature(CCS811_STRUCT * ccs811)
-{
-    return ccs811->temperature;
-}
-
+    /**
+     * @brief - Probably doesn't work.
+     * 
+     * @param ccs8111 
+     * @return float 
+     */
+    float CCS811_Get_Temperature(CCS811_STRUCT * ccs811)
+    {
+        return ccs811->temperature;
+    }
+#endif
 
 /**
  * @brief Write environmental data to the CCS811
@@ -308,6 +320,46 @@ void CCS811_Write_Env(float temperature, float relativeHumidity)
 
     CCS811_multiWriteReg(REG_ENV_DATA, envData, 4);
 }
+
+
+/**
+ * @brief 
+ * 
+ * @param low_to_med 
+ * @param med_to_high 
+ */
+void CCS811_Write_Threshold(CCS811_STRUCT * ccs811, uint16_t low_to_med, uint16_t med_to_high)
+{
+    uint8_t buf[4];
+    ccs811->low_to_med = low_to_med;
+    ccs811->med_to_high = med_to_high;
+
+    buf[0] = low_to_med >> 8;
+    buf[1] = low_to_med & 0x00FF;
+    buf[2] = med_to_high >> 8;
+    buf[3] = med_to_high & 0x00FF;
+
+    CCS811_multiWriteReg(REG_THRESHOLDS, buf, 4);
+
+}
+
+
+/**
+ * @brief Write to the base line register the baseline value
+ * 
+ * @param baseline 
+ */
+void CCS811_Write_Baseline(CCS811_STRUCT * ccs811, uint16_t baseline)
+{
+    uint8_t buf[2];
+    ccs811->baseline = baseline;
+    buf[0] = baseline >> 8;
+    buf[1] = baseline & 0x00FF;
+
+    CCS811_multiWriteReg(REG_BASELINE, buf, 2);
+
+}
+
 
 
 /**
