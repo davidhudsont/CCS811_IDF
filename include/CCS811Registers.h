@@ -1,4 +1,13 @@
-
+/**
+ * @file CCS811Registers.h
+ * @author David Hudson (you@domain.com)
+ * @brief Register address and Status values and default values
+ * @version 0.1
+ * @date 2020-01-06
+ * 
+ * @copyright Copyright (c) 2020
+ * 
+ */
 
 #ifndef _CCS811_REGISTERS_H_
 #define _CCS811_REGISTERS_H_
@@ -58,6 +67,12 @@
 #define MAX_RESISTANCE      (0x08)
 #define HEATER_FAULT        (0x10)
 #define HEATER_SUPPLY       (0x20)
+
+
+//Theshold default values
+#define LOW_THRESHOLD   (1500)
+#define HIGH_THRESHOLD  (2500)
+#define HYSTERESIS      (50)
 
 // NTC Values
 #define NTC_REG_EXISTS (0)
