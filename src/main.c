@@ -1,7 +1,8 @@
 /**
  * @file main.c
  * @author David Hudson
- * @brief 
+ * @brief Simple CCS811 Driver application
+ *        has both a interrupt and non-interrupt tasks.
  * @version 0.1
  * @date 2019-11-16
  * 
@@ -17,7 +18,7 @@
 #include <string.h>
 #include "CCS811.h"
 
-QueueHandle_t queue;
+//QueueHandle_t queue;
 
 #define BLINK_GPIO (5)
 
@@ -31,14 +32,13 @@ void delay(int time)
     vTaskDelay( time / portTICK_PERIOD_MS);
 }
 
+/**
+ * @brief Blink task to test RTOS
+ * 
+ * @param pvParameter 
+ */
 void blink_task(void *pvParameter)
 {
-    /* Configure the IOMUX register for pad BLINK_GPIO (some pads are
-       muxed to GPIO on reset already, but some default to other
-       functions and need to be switched to GPIO. Consult the
-       Technical Reference for a list of pads and their default
-       functions.)
-    */
     printf("Blink Task Start!\n");
 
     gpio_pad_select_gpio(BLINK_GPIO);
@@ -57,7 +57,11 @@ void blink_task(void *pvParameter)
     }
 }
 
-
+/**
+ * @brief Non-interrupt driven CCS811 Driver Task
+ * 
+ * @param pvParameter 
+ */
 void ccs811_task(void *pvParameter)
 {
     CCS811_STRUCT ccs811_device;
@@ -73,11 +77,11 @@ void ccs811_task(void *pvParameter)
     if (err == ESP_OK)
     {
         printf("Set the Drive Mode\n");
-        CCS811_Set_Drive_Mode(CONSTANT_POWER, false, false);
+        CCS811_Set_Drive_Mode(&ccs811_device, CONSTANT_POWER, false, false);
     }
     else
     {
-        CCS811_Set_Drive_Mode(IDLE, false, false);
+        CCS811_Set_Drive_Mode(&ccs811_device,IDLE, false, false);
     }
 
     while (1)
@@ -96,11 +100,16 @@ void ccs811_task(void *pvParameter)
 }
 
 
+/**
+ * @brief CCS811 Interrupt Driver Task
+ * 
+ * @param pvParameter 
+ */
 void ccs811_task_intr(void *pvParameter)
 {
     CCS811_STRUCT ccs811_device;
-    uint16_t eCO2 = 201;
-    uint16_t tVOC = 909;
+    //uint16_t eCO2 = 201;
+    //uint16_t tVOC = 909;
     char msg;
 
     printf("Initialize Device\n");
@@ -115,15 +124,15 @@ void ccs811_task_intr(void *pvParameter)
     if (err == ESP_OK)
     {
         printf("Set the Drive Mode\n");
-        CCS811_Set_Drive_Mode(CONSTANT_POWER, true, false);
+        CCS811_Set_Drive_Mode(&ccs811_device, PULSE_HEATING, true, false);
     }
     else
     {
-        CCS811_Set_Drive_Mode(IDLE, false, false);
+        CCS811_Set_Drive_Mode(&ccs811_device, IDLE, false, false);
     }
 
     CCS811_ReadAlgorithm_Results(&ccs811_device);
-    delay(1000);
+    delay(500);
 
 
     while (1)
@@ -132,18 +141,21 @@ void ccs811_task_intr(void *pvParameter)
         if (msg == 'r')
         {
             CCS811_ReadAlgorithm_Results(&ccs811_device);
-            eCO2 = CCS811_Get_CO2(&ccs811_device);
-            printf("eC02 = %d ppm\n",eCO2);
-            tVOC = CCS811_Get_TVOC(&ccs811_device);
-            printf("tVOC = %d\n",tVOC);
-            printf("Counter = %d\n", ccs811_device.counter);  
+            CCS811_Print_Struct(&ccs811_device);
+            //eCO2 = CCS811_Get_CO2(&ccs811_device);
+            //printf("eC02 = %d ppm\n",eCO2);
+            //tVOC = CCS811_Get_TVOC(&ccs811_device);
+            //printf("tVOC = %d\n",tVOC);
+            //printf("Counter = %d\n", ccs811_device.counter);  
             msg = ' ';
         }
-        //delay(1000);
     }
 }
 
-
+/**
+ * @brief Application entry point
+ * 
+ */
 void app_main()
 {
     printf("Starting Tasks!\n");

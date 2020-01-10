@@ -1,4 +1,13 @@
-
+/**
+ * @file CCS811.h
+ * @author David Hudson (you@domain.com)
+ * @brief CCS811 Driver Header file
+ * @version 0.1
+ * @date 2020-01-05
+ * 
+ * @copyright Copyright (c) 2020
+ * 
+ */
 
 #include "bspI2C.h"
 #include "CCS811Registers.h"
@@ -10,9 +19,17 @@
 
 QueueHandle_t queue;
 
+#define CCS811_nWAKE_PIN_NUM (10)
+
 #define CCS811_INTR_PIN_NUM (4) // Interrupt pin connected to CCS811 Intr pin
 #define CCS811_INTR_FLAGS_DEFAULT (0) // Interrupt Flags
 
+#define CCS811_INTR_PIN_NUM2 (5) // Interrupt pin connectec to CCS811 Threshold intr pin
+
+/**
+ * @brief CCS811 Measurement modes enumeration
+ * 
+ */
 typedef enum drive_modes {
     IDLE            = 0,  // Sleep Mode         
     CONSTANT_POWER  = 1,  // Measurement every 1 second
@@ -22,12 +39,25 @@ typedef enum drive_modes {
 } DRIVE_MODES;
 
 
+
+
+/**
+ * @brief CCS811 device structure
+ * 
+ */
 typedef struct ccs811_struct {
     uint16_t tVOC;          // Current tVOC reading
     uint16_t eCO2;          // Current eC02 reading
-    uint16_t low_to_med;    // low to medium threshold
-    uint16_t med_to_high;   // medium to high threshold
+
+    DRIVE_MODES modes;
+    bool app_start;
+    bool data_ready_intr_mode;
+    bool threshold_intr_mode;
+
     uint16_t baseline;      // Baseline
+    uint16_t low_threshold;
+    uint16_t high_threshold;
+    uint16_t hysteresis;
 #if NTC_REG_EXISTS
     float temperature;
 #endif
@@ -35,11 +65,14 @@ typedef struct ccs811_struct {
 
 } CCS811_STRUCT;
 
+
 esp_err_t CCS811_Initialize(CCS811_STRUCT * ccs811);
+
+void CCS811_Print_Struct(CCS811_STRUCT * ccs811);
 
 void CCS811_SW_Reset();
 
-void CCS811_Set_Drive_Mode(DRIVE_MODES modes, bool intr_data_rdy, bool int_thresh);
+void CCS811_Set_Drive_Mode(CCS811_STRUCT * ccs811, DRIVE_MODES modes, bool intr_data_rdy, bool int_thresh);
 
 bool CCS811_Data_Available(void);
 
@@ -54,10 +87,13 @@ float CCS811_Get_Temperature(CCS811_STRUCT * ccs811);
 
 void CCS811_Write_Env(float temperature, float humidity);
 void CCS811_Write_Threshold(CCS811_STRUCT * ccs811, uint16_t low_to_med, uint16_t med_to_high);
+
+void CCS811_Read_Baseline(CCS811_STRUCT * ccs811);
 void CCS811_Write_Baseline(CCS811_STRUCT * ccs811, uint16_t baseline);
 
 void CCS811_Print_Error();
 
+// CCS811 register functions
 uint8_t CCS811_readReg(uint8_t address);
 void CCS811_writeReg(uint8_t address, uint8_t data);
 

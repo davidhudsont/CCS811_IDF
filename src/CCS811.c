@@ -1,4 +1,12 @@
-
+/**
+ * @file CCS811.c
+ * @author David Hudson (you@domain.com)
+ * @brief CCS811 driver module
+ * @version 0.1
+ * @date 2020-01-05
+ * 
+ * 
+ */
 
 #include "CCS811.h"
 #include <driver/gpio.h>
@@ -16,7 +24,10 @@ esp_err_t CCS811_Initialize(CCS811_STRUCT * ccs811)
 {
     // Clear CCS811_STRUCT
     memset(ccs811, 0 , sizeof(CCS811_STRUCT));
-    
+
+    ccs811->low_threshold = LOW_THRESHOLD;
+    ccs811->high_threshold = HIGH_THRESHOLD;
+    ccs811->hysteresis = HYSTERESIS;
     // Start the I2C Bus
     BSP_I2C_Setup();
 
@@ -52,7 +63,28 @@ esp_err_t CCS811_Initialize(CCS811_STRUCT * ccs811)
         return ESP_FAIL;
 
     // Success!
+    ccs811->app_start = true;
     return ESP_OK;
+
+}
+
+
+/**
+ * @brief Print out the data structure
+ * 
+ * @param ccs811 
+ */
+void CCS811_Print_Struct(CCS811_STRUCT * ccs811)
+{
+    printf("Application Start: %d\n", ccs811->app_start);
+    printf("Measurement Mode: %d\n", ccs811->modes);
+    printf("Data Intr: %d, Thesh Intr: %d\n", ccs811->data_ready_intr_mode, ccs811->threshold_intr_mode);
+    printf("Threshold High: %d\n", ccs811->high_threshold);
+    printf("Threshold Low: %d\n", ccs811->low_threshold);
+    printf("Hysteresis: %d\n", ccs811->hysteresis);
+    printf("Baseline: %d\n", ccs811->baseline);
+    printf("eC02: %d, tVOC: %d\n", ccs811->eCO2, ccs811->tVOC);
+    printf("Counter: %d\n", ccs811->counter);
 
 }
 
@@ -146,9 +178,13 @@ uint16_t CCS811_Get_TVOC(CCS811_STRUCT * ccs811)
  * @param intr_data_rdy - Set interrupt when data is ready (true)
  * @param int_thresh - Set interrupt when threshold is crossed (true)
  */
-void CCS811_Set_Drive_Mode(DRIVE_MODES modes, bool intr_data_rdy, bool int_thresh)
+void CCS811_Set_Drive_Mode(CCS811_STRUCT * ccs811, DRIVE_MODES modes, bool intr_data_rdy, bool int_thresh)
 {
     uint8_t data = 0;
+    ccs811->modes = modes;
+    ccs811->data_ready_intr_mode = intr_data_rdy;
+    ccs811->threshold_intr_mode = int_thresh;
+
     switch (modes)
     {
     case IDLE:
@@ -179,9 +215,14 @@ void CCS811_Set_Drive_Mode(DRIVE_MODES modes, bool intr_data_rdy, bool int_thres
 }
 
 
+/**
+ * @brief Interrupt handler for data ready pin
+ * 
+ * @param arg 
+ */
 static void IRAM_ATTR data_ready_isr_handler(void * arg)
 {
-    char msg = 'r';
+    char msg = 'r'; // Send data ready character
     BaseType_t base;
 
     CCS811_STRUCT * ccs811_dev =  arg;
@@ -214,7 +255,7 @@ void CCS811_ISR_Init(CCS811_STRUCT * ccs811)
     // Set to input mode
     io_conf.mode = GPIO_MODE_INPUT;
 
-    // enable pull-up
+    // enable pull-down
     io_conf.pull_up_en = false;
     io_conf.pull_down_en = true;
 
@@ -292,8 +333,8 @@ void CCS811_ISR_Init(CCS811_STRUCT * ccs811)
 /**
  * @brief Write environmental data to the CCS811
  * 
- * @param temperature - In degrees Celsius
- * @param relativeHumidity 
+ * @param temperature - In degrees Celsius (-25 to 50)
+ * @param relativeHumidity - In percent humidity (0 to 100%)
  */
 void CCS811_Write_Env(float temperature, float relativeHumidity) 
 {
@@ -323,7 +364,7 @@ void CCS811_Write_Env(float temperature, float relativeHumidity)
 
 
 /**
- * @brief 
+ * @brief Stores low and high threshold values
  * 
  * @param low_to_med 
  * @param med_to_high 
@@ -331,8 +372,8 @@ void CCS811_Write_Env(float temperature, float relativeHumidity)
 void CCS811_Write_Threshold(CCS811_STRUCT * ccs811, uint16_t low_to_med, uint16_t med_to_high)
 {
     uint8_t buf[4];
-    ccs811->low_to_med = low_to_med;
-    ccs811->med_to_high = med_to_high;
+    ccs811->low_threshold = low_to_med;
+    ccs811->high_threshold = med_to_high;
 
     buf[0] = low_to_med >> 8;
     buf[1] = low_to_med & 0x00FF;
@@ -343,6 +384,19 @@ void CCS811_Write_Threshold(CCS811_STRUCT * ccs811, uint16_t low_to_med, uint16_
 
 }
 
+
+/**
+ * @brief Read the baseline register store the baseline
+ * 
+ * @param ccs811 
+ */
+void CCS811_Read_Baseline(CCS811_STRUCT * ccs811)
+{
+    uint8_t buf[2];
+    CCS811_multiReadReg(REG_BASELINE, buf, 2);
+    ccs811->baseline = (((uint16_t) buf[0] << 8) | buf[1]);
+
+}
 
 /**
  * @brief Write to the base line register the baseline value
