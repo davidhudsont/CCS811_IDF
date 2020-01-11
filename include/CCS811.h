@@ -1,11 +1,9 @@
 /**
  * @file CCS811.h
- * @author David Hudson (you@domain.com)
+ * @author David Hudson
  * @brief CCS811 Driver Header file
- * @version 0.1
- * @date 2020-01-05
+ * @date 2020-01-11
  * 
- * @copyright Copyright (c) 2020
  * 
  */
 
@@ -46,18 +44,16 @@ typedef enum drive_modes {
  * 
  */
 typedef struct ccs811_struct {
-    uint16_t tVOC;          // Current tVOC reading
-    uint16_t eCO2;          // Current eC02 reading
-
-    DRIVE_MODES modes;
-    bool app_start;
-    bool data_ready_intr_mode;
-    bool threshold_intr_mode;
-
-    uint16_t baseline;      // Baseline
-    uint16_t low_threshold;
-    uint16_t high_threshold;
-    uint16_t hysteresis;
+    uint16_t tVOC;              // Current tVOC reading
+    uint16_t eCO2;              // Current eC02 reading
+    DRIVE_MODES modes;          // Current measurement mode
+    bool app_start;             // Application has been started
+    bool data_ready_intr_mode;  // Data ready interrupt mode is set
+    bool threshold_intr_mode;   // Threshold interrupt mdoe is set
+    uint16_t baseline;          // Baseline value
+    uint16_t low_threshold;     // Low threshold value
+    uint16_t high_threshold;    // High threshold value
+    uint16_t hysteresis;        // Hysteresis value
 #if NTC_REG_EXISTS
     float temperature;
 #endif

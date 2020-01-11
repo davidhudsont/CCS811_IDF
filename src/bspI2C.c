@@ -1,4 +1,10 @@
-
+/**
+ * @file bspI2C.c
+ * @author David Hudson 
+ * @brief ESP32 Board support I2C Driver implementation file.
+ * @date 2020-01-11
+ * 
+ */
 
 #include "bspI2C.h"
 #include "sdkconfig.h"

@@ -3,9 +3,7 @@
  * @author David Hudson
  * @brief Simple CCS811 Driver application
  *        has both a interrupt and non-interrupt tasks.
- * @version 0.1
- * @date 2019-11-16
- * 
+ * @date 2020-01-11
  * 
  */
 
@@ -18,7 +16,6 @@
 #include <string.h>
 #include "CCS811.h"
 
-//QueueHandle_t queue;
 
 #define BLINK_GPIO (5)
 
@@ -89,7 +86,6 @@ void ccs811_task(void *pvParameter)
         if (CCS811_Data_Available())
         {
             CCS811_ReadAlgorithm_Results(&ccs811_device);
-            //CCS811_Read_NTC(&ccs811_device);
             uint16_t eCO2 = CCS811_Get_CO2(&ccs811_device);
             printf("eC02 = %d ppm\n",eCO2);
             uint16_t tVOC = CCS811_Get_TVOC(&ccs811_device);

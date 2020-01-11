@@ -2,8 +2,7 @@
  * @file CCS811.c
  * @author David Hudson (you@domain.com)
  * @brief CCS811 driver module
- * @version 0.1
- * @date 2020-01-05
+ * @date 2020-01-11
  * 
  * 
  */
@@ -173,7 +172,8 @@ uint16_t CCS811_Get_TVOC(CCS811_STRUCT * ccs811)
 
 /**
  * @brief Set the drive mode of the CCS811 device
- * 
+ * @todo should split up the drive mode into 3 functions
+ *       1 for measurment and the other 2 for interrupt modes
  * @param modes - Different drive modes
  * @param intr_data_rdy - Set interrupt when data is ready (true)
  * @param int_thresh - Set interrupt when threshold is crossed (true)
@@ -184,6 +184,8 @@ void CCS811_Set_Drive_Mode(CCS811_STRUCT * ccs811, DRIVE_MODES modes, bool intr_
     ccs811->modes = modes;
     ccs811->data_ready_intr_mode = intr_data_rdy;
     ccs811->threshold_intr_mode = int_thresh;
+
+    // TODO should read the current configuration
 
     switch (modes)
     {
@@ -207,6 +209,7 @@ void CCS811_Set_Drive_Mode(CCS811_STRUCT * ccs811, DRIVE_MODES modes, bool intr_
         break;
     }
 
+    // TODO this is not the correct way to overite the data.
     data |= intr_data_rdy ? MEAS_INT_DATARDY : 0x00;
     data |= int_thresh ? MEAS_INT_THRESH : 0x00;
 
@@ -234,7 +237,7 @@ static void IRAM_ATTR data_ready_isr_handler(void * arg)
 
 
 /**
- * @brief If using data ready interrupt 
+ * @brief If using data ready interrupt pin
  * 
  * @param ccs811 - ccs811 device struct
  */
@@ -275,14 +278,15 @@ void CCS811_ISR_Init(CCS811_STRUCT * ccs811)
      * @brief Calculate the temperature from the thermistor
      *        and store it. 
      * 
-     * The NTC register is no longer document in the CCS811 data sheet
+     * The NTC register is no longer documented in the CCS811 data sheet
      * so this function most likely doesn't do anything.
+     * See https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library/issues/18
      * 
      *  Equation: 1. B = log(R/Ro)/(1/T - 1/To)
      *            2. (1/T - 1/To) = log(R/Ro)/B
      *            3. 1/T = log(R/Ro)/B + 1/To
      *            4. T = 1/(log(R/Ro)/B + 1/To)
-     * 
+     *  
      * @param ccs811 - CCS811 device struct
      */
     void CCS811_Read_NTC(CCS811_STRUCT * ccs811)
@@ -330,9 +334,11 @@ void CCS811_ISR_Init(CCS811_STRUCT * ccs811)
     }
 #endif
 
+
 /**
  * @brief Write environmental data to the CCS811
- * 
+ * Credit to sparkfun library for the corrected function of 
+ * writing environmental data see https://github.com/sparkfun/Qwiic_BME280_CCS811_Combo
  * @param temperature - In degrees Celsius (-25 to 50)
  * @param relativeHumidity - In percent humidity (0 to 100%)
  */
@@ -398,6 +404,7 @@ void CCS811_Read_Baseline(CCS811_STRUCT * ccs811)
 
 }
 
+
 /**
  * @brief Write to the base line register the baseline value
  * 
@@ -413,7 +420,6 @@ void CCS811_Write_Baseline(CCS811_STRUCT * ccs811, uint16_t baseline)
     CCS811_multiWriteReg(REG_BASELINE, buf, 2);
 
 }
-
 
 
 /**

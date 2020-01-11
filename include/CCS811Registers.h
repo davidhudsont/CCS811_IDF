@@ -1,11 +1,9 @@
 /**
  * @file CCS811Registers.h
- * @author David Hudson (you@domain.com)
- * @brief Register address and Status values and default values
- * @version 0.1
- * @date 2020-01-06
+ * @author David Hudson
+ * @brief Register address, Status values and default values
+ * @date 2020-01-11
  * 
- * @copyright Copyright (c) 2020
  * 
  */
 
@@ -13,8 +11,8 @@
 #define _CCS811_REGISTERS_H_
 
 // Devices Addresses
-#define CCS811_DEV_ADDR_A   (0x5A)
-#define CCS811_DEV_ADDR_B   (0x5B)
+#define CCS811_DEV_ADDR_A   (0x5A)  // Device address
+#define CCS811_DEV_ADDR_B   (0x5B)  // Device address
 
 // Register Addresses
 #define REG_STATUS              (0x00) // 1 bytes (R) Status register
@@ -37,19 +35,19 @@
 #define CCS811_HW_ID_VALUE  (0x81)
 
 // Values for REG_STATUS
-#define FW_MODE         (0x80)
-#define APP_ERASE       (0x40)
-#define APP_VERIFY      (0x20)
-#define APP_VALID       (0x10)
-#define DATA_READY      (0x08)
-#define ERROR           (0x01)
+#define FW_MODE         (0x80)  // FW Mode bit
+#define APP_ERASE       (0x40)  // App Erase bit
+#define APP_VERIFY      (0x20)  // App verified bit
+#define APP_VALID       (0x10)  // App valid bit
+#define DATA_READY      (0x08)  // Data ready bit
+#define ERROR           (0x01)  // Error bit (Read Error register)
 
 // Values for REG_MEAS_MODE
-#define MEAS_IDLE       (0x00)
-#define MEAS_1SECOND    (0x10)
-#define MEAS_10SECOND   (0x20)
-#define MEAS_60SECOND   (0x30)
-#define MEAS_4HZ        (0x40)
+#define MEAS_IDLE       (0x00)  // Low power no measurements
+#define MEAS_1SECOND    (0x10)  // 1 second measurment speed
+#define MEAS_10SECOND   (0x20)  // 10 second measurement speed
+#define MEAS_60SECOND   (0x30)  // 60 second measurement speed
+#define MEAS_4HZ        (0x40)  // 4Hz measurment speed
 
 #define MEAS_INT_DATARDY (0x08)
 #define MEAS_INT_THRESH  (0x04)
@@ -61,10 +59,10 @@
 #define RESET_CODE_4    (0x8A)
 
 // Error Codes
-#define WRITE_REG_INVALID   (0x01)
-#define READ_REG_INVALID    (0x02)
-#define MEASMODE_INVALID    (0x04)
-#define MAX_RESISTANCE      (0x08)
+#define WRITE_REG_INVALID   (0x01)  // Invalid register write
+#define READ_REG_INVALID    (0x02)  // Invalid register read
+#define MEASMODE_INVALID    (0x04)  // Invalid measurement mode
+#define MAX_RESISTANCE      (0x08)  
 #define HEATER_FAULT        (0x10)
 #define HEATER_SUPPLY       (0x20)
 
@@ -75,10 +73,10 @@
 #define HYSTERESIS      (50)
 
 // NTC Values
-#define NTC_REG_EXISTS (0)
-#define Rref (10000) // 10kOhm Resistor
-#define RNTC_25C (10000) // Thermistor resistance at 25C
-#define BCONSTANT (3977) // BConstant for a 10k Thermistor
-#define RNTC_TEMP (25) // Room Temperature for Thermistor 25C
+#define NTC_REG_EXISTS  (0)
+#define Rref            (10000) // 10kOhm Resistor
+#define RNTC_25C        (10000) // Thermistor resistance at 25C
+#define BCONSTANT       (3977) // BConstant for a 10k Thermistor
+#define RNTC_TEMP       (25) // Room Temperature for Thermistor 25C
 
 #endif
