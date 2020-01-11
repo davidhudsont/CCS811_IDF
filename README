@@ -1,5 +1,5 @@
 
-* CCS811 ESP32 IDF Driver Project
+# CCS811 ESP32 IDF Driver Project
 
 This a PIO extension VS Code project that contains driver code for the CCS811 Air Quality Sensor.
 The driver is for the ESP32 IDF framework.
@@ -18,8 +18,8 @@ This driver was developed using the Spark CCS811 Air Quality Breakout:
 https://www.sparkfun.com/products/14193
 
 
-CCS811 Datasheet:
-https://cdn.sparkfun.com/assets/2/c/c/6/5/CN04-2019_attachment_CCS811_Datasheet_v1-06.pdf
+## CCS811 Datasheet:
+    https://cdn.sparkfun.com/assets/2/c/c/6/5/CN04-2019_attachment_CCS811_Datasheet_v1-06.pdf
 
-Programming Guide:
-https://cdn.sparkfun.com/datasheets/BreakoutBoards/CCS811_Programming_Guide.pdf
+## Programming Guide:
+    https://cdn.sparkfun.com/datasheets/BreakoutBoards/CCS811_Programming_Guide.pdf
